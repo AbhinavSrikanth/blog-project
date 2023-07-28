@@ -4,13 +4,14 @@ from datetime import datetime
 
 
 class Author:
-    def __init__(self,id,name,email,hashed_password):
+    def __init__(self,id,name,email,hashed_password,confirm_password):
         self.id=id
         self.name=name
         self.hashed_password=hashed_password
         self.email=email
+        self.confirm_password=confirm_password
         
-        
+                
     def hash_password(self):
         self.hashed_password=bcrypt.hashpw(self.hashed_password.encode('utf-8'),bcrypt.gensalt())
     
@@ -27,8 +28,8 @@ class Author:
 
                     if count>0:
                         raise ValueError("Author ID already exists in the table")
-                    insert_query="INSERT INTO author(id,name,email,hashed_password,created_at,updated_at) VALUES (%s,%s,%s,%s,%s,%s)"
-                    cursor.execute(insert_query,[self.id,self.name,self.email,self.hashed_password,current_time,current_time])
+                    insert_query="INSERT INTO author(name,email,hashed_password,created_at,updated_at) VALUES (%s,%s,%s,%s,%s) RETURNING id"
+                    cursor.execute(insert_query,[self.name,self.email,self.hashed_password,current_time,current_time])
                     current_time=datetime.now()
                     db.connection.commit()
                     print("Author data inserted successfully!")
@@ -49,7 +50,7 @@ class Author:
                         update_values.append(kwargs["name"])
 
                     if "email" in kwargs and kwargs["email"] is not None:
-                            update_query+=" rating=%s,"
+                            update_query+=" email=%s,"
                             update_values.append(kwargs["email"])
                             
                     if "hashed_password" in kwargs and kwargs["hashed_password"] is not None:

@@ -1,4 +1,5 @@
-from flask import Flask,jsonify,request
+from flask import Flask,jsonify,request,render_template
+import bcrypt
 import hashlib
 from author import Author
 from blog import Blog
@@ -83,11 +84,14 @@ def register():
         name=data.get("name")
         email=data.get("email")
         password=data.get("password")
-        
+        confirm_password=data.get("confirm_password")
         existing_author=Author.get_one_by_email(email)
+        
+        if password!=confirm_password:
+            return jsonify({"error":"Password do not match"}),400
         if existing_author:
             return jsonify({"error":"Email already registered with a different account"}),400
-        hashed_password=hashlib.sha256(password.encode()).hexdigest()
+        hashed_password=bcrypt.hashpw(password.encode('utf-8'),bcrypt.gensalt())
         
         author=Author(name=name,email=email,hashed_password=hashed_password)
         author.save_data()
