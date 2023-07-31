@@ -4,33 +4,41 @@ from datetime import datetime
 
 
 class Author:
-    def __init__(self,id,name,email,hashed_password,confirm_password):
+    def __init__(self,id=None,name=None,email=None,password=None):
         self.id=id
         self.name=name
-        self.hashed_password=hashed_password
         self.email=email
-        self.confirm_password=confirm_password
+        self.password=password
+
         
                 
     def hash_password(self):
-        self.hashed_password=bcrypt.hashpw(self.hashed_password.encode('utf-8'),bcrypt.gensalt())
+        if isinstance(self.password,bytes):
+            self.password=self.password.decode('utf-8')
+        salt=bcrypt.gensalt()
+        self.password=bcrypt.hashpw(self.password.encode('utf-8'),salt)
+
     
     
     def save_data(self):
         db=Database()
         if db.connection:
             try:
-                self.hash_password()
                 with db.connection.cursor() as cursor:
-                    select_query="SELECT COUNT(*) FROM author WHERE id=%s"
-                    cursor.execute(select_query,[self.id])
-                    count=cursor.fetchone()[0]
+                    with db.connection:
+                        select_query="SELECT COUNT(*) FROM author WHERE id=%s"
+                        cursor.execute(select_query,[self.id])
+                        count=cursor.fetchone()[0]
 
                     if count>0:
                         raise ValueError("Author ID already exists in the table")
-                    insert_query="INSERT INTO author(name,email,hashed_password,created_at,updated_at) VALUES (%s,%s,%s,%s,%s) RETURNING id"
-                    cursor.execute(insert_query,[self.name,self.email,self.hashed_password,current_time,current_time])
+                    
+                    self.hash_password()
                     current_time=datetime.now()
+                    insert_query="INSERT INTO author(name,email,hashed_password,created_at,updated_at) VALUES (%s,%s,%s,%s,%s) RETURNING id"
+                    cursor.execute(insert_query,[self.name,self.email,self.password,current_time,current_time])
+                    author_id=cursor.fetchone()[0]
+                    self.id=author_id
                     db.connection.commit()
                     print("Author data inserted successfully!")
             except Exception as e:
@@ -53,11 +61,11 @@ class Author:
                             update_query+=" email=%s,"
                             update_values.append(kwargs["email"])
                             
-                    if "hashed_password" in kwargs and kwargs["hashed_password"] is not None:
-                        self.hashed_password = kwargs["hashed_password"]
+                    if "password" in kwargs and kwargs["password"] is not None:
+                        self.assword = kwargs["password"]
                         self.hash_password()
                         update_query += " hashed_password=%s,"
-                        update_values.append(self.hashed_password)
+                        update_values.append(self.password)
                         
                     if not update_values:
                         raise ValueError("Nothing to update.Please provide valid update parameters.")
@@ -118,6 +126,8 @@ class Author:
             finally:
                 db.close_connection()
                 
+        pass
+                
                 
                 
     @staticmethod
@@ -166,6 +176,8 @@ class Author:
                     ]
                 return all_authors_data
             
+            
+    
             
         except Exception as e:
             print(f"Error:{e}")

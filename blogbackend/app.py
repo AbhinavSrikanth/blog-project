@@ -1,12 +1,23 @@
 from flask import Flask,jsonify,request,render_template
 import bcrypt
-import hashlib
 from author import Author
 from blog import Blog
 from post import Post
 from comment import Comment
+from flask_cors import CORS
+
+
 
 app=Flask(__name__)
+CORS(app)
+
+
+@app.route('/test', methods=['GET'])
+def test_route():
+    return 'Hello, this is a test route!'
+
+
+
 
 #getoneauthor
 @app.route('/author/<int:id>', methods=['GET'])
@@ -74,7 +85,18 @@ def delete_author(id):
         return jsonify({"error":str(e)}),400
     
     
-    
+def hash_password(password):
+    if isinstance(password,bytes):
+        password=password.decode('utf-8')
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+
+#renderaccountcreation
+@app.route('/blogfrontend/accountcreation/accountcreation.html', methods=['GET'])
+def account_creation_page():
+    return render_template('blogfrontend/accountcreation/accountcreation.html')
+
+
     
 #registernewuser
 @app.route('/register',methods=['POST'])
@@ -84,22 +106,30 @@ def register():
         name=data.get("name")
         email=data.get("email")
         password=data.get("password")
-        confirm_password=data.get("confirm_password")
-        existing_author=Author.get_one_by_email(email)
         
-        if password!=confirm_password:
-            return jsonify({"error":"Password do not match"}),400
+        existing_author = Author.get_one_by_email(email)
         if existing_author:
-            return jsonify({"error":"Email already registered with a different account"}),400
-        hashed_password=bcrypt.hashpw(password.encode('utf-8'),bcrypt.gensalt())
-        
-        author=Author(name=name,email=email,hashed_password=hashed_password)
+            return jsonify({"error": "Email already registered with a different account"}), 400
+            
+        author = Author(name=name, email=email, password=password)
+        author.hash_password()
         author.save_data()
-        
-        return jsonify({"message":"Account created successfully"})
+
+        return jsonify({"message": "Account created successfully"})
+
 
     except Exception as e:
         return jsonify({"error":str(e)}),400
+
+
+@app.before_request
+def disable_csrf_for_register():
+    if request.path=='/register':
+        return    
+    
+    
+
+    
     
     
 #getoneblog
@@ -157,7 +187,7 @@ def update_blog(id):
 @app.route('/blog/<id>',methods=['DELETE'])
 def delete_blog(id):
     try:
-        blog=Blog.get_one(id)   
+        blog=Blog.get_one(id)
         if not blog:
             return jsonify({"error":"blog not found"}),404
         Blog.delete(id)
