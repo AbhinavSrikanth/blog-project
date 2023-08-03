@@ -1,6 +1,7 @@
 from database import Database
 import bcrypt
 from datetime import datetime
+from flask import url_for,redirect
 
 
 class Author:
@@ -104,29 +105,17 @@ class Author:
         if db.connection:
             try:
                 with db.connection.cursor() as cursor:
-                    select_query = "SELECT id,name,email,created_at,updated_at FROM author WHERE email = %s"
-                    cursor.execute(select_query, [email])
+                    select_query = f"SELECT id,name,email,hashed_password,created_at,updated_at FROM author WHERE email = '{email}'"
+                    print(select_query)
+                    cursor.execute(select_query)
                     author_data = cursor.fetchone()
-
-                    if author_data:
-                        author_dict = {
-                            'id': author_data[0],
-                            'name': author_data[1],
-                            'email': author_data[2],
-                            'created_at':author_data[3],
-                            'updated_at':author_data[4]
-                        }
-                        return author_dict
-                    else:
-                        return None
-
+                    print("Author data => ", author_data)
+                    return author_data
             except Exception as e:
                 print(f"Error: {e}")
 
             finally:
                 db.close_connection()
-                
-        pass
                 
                 
                 

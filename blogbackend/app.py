@@ -1,16 +1,19 @@
-from flask import Flask,jsonify,request,render_template
+from flask import Flask,jsonify,request,render_template,redirect,url_for,session
 import bcrypt
+from bcrypt import checkpw,gensalt,hashpw
 from author import Author
 from blog import Blog
 from post import Post
 from comment import Comment
 from flask_cors import CORS
+from database import Database
+import database as db
 
 
 
-app=Flask(__name__)
-CORS(app)
-
+app=Flask(__name__,static_url_path='/static')
+CORS(app,supports_credentials=True,origins='*')
+app.secret_key="whirldata@123"
 
 @app.route('/test', methods=['GET'])
 def test_route():
@@ -128,9 +131,53 @@ def disable_csrf_for_register():
         return    
     
     
+#loginrendering
+@app.route('/blogfrontend/login/login.html', methods=['GET'])   
+def login_page():
+    return render_template('blogfrontend/login/login.html')
 
     
+def check_user_credentials(password,hashed_password):
+    password_encoded=password.encode('utf-8')
+    hashed_password_encoded=bytes.fromhex(hashed_password[2:])
+    return bcrypt.checkpw(password_encoded,hashed_password_encoded)
+   
     
+    
+
+
+@app.route('/login', methods=['POST'])
+def login():
+    data=request.get_json()
+    email=data.get("email")
+    password=data.get("password")
+    
+    try:
+        print(f"Attempting login with email:{email}")
+        author_data=Author.get_one_by_email(email)
+        print("returned author=>",author_data)
+        
+        if author_data and check_user_credentials(password,author_data[3]):
+            session['user_id']=author_data[0]
+            return redirect('blogfrontend/home/home.html')
+        else:
+            return jsonify({"error":"Invalid email or password"})
+    except Exception as e:
+        return jsonify({"error":str(e)}),400
+            
+    
+@app.route('/home')
+def home_page():
+    if 'user_id' not in session:
+        return redirect('blogfrontend/login/login.html')
+      
+    user_id=session['user_id']
+    author=Author.get_one(user_id)
+    
+    if author:
+        return render_template('blogfrontend/home/home.html',author=author)
+    else:
+        return jsonify({"error":"Author not found"}),404
     
 #getoneblog
 @app.route('/blog/<id>', methods=['GET'])

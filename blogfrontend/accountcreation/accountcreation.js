@@ -40,5 +40,12 @@ document.addEventListener('DOMContentLoaded', () => {
         alert('An error occurred. Please try again later.');
       }
     });
+
+    function redirectToLogin(){
+      console.log("dfghj")
+      window.location.href='../login/login.html';
+    }
+    const loginButton=document.querySelector('button.login');
+    loginButton.addEventListener('click',redirectToLogin)
   });
   
