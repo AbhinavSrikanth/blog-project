@@ -84,13 +84,13 @@ class Author:
             finally:
                 db.close_connection()
     @staticmethod
-    def delete(author_id):
+    def delete(email):
         db=Database()
         if db.connection:
             try:
                 with db.connection.cursor() as cursor:
-                    delete_query="DELETE FROM author WHERE id= %s"
-                    cursor.execute(delete_query,(author_id,))
+                    delete_query="DELETE FROM author WHERE email= %s"
+                    cursor.execute(delete_query,(email,))
                     db.connection.commit()
                     print("Author data deleted successfully!")
             except Exception as e:

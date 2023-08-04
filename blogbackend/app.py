@@ -6,8 +6,6 @@ from blog import Blog
 from post import Post
 from comment import Comment
 from flask_cors import CORS
-from database import Database
-import database as db
 
 
 
@@ -179,6 +177,8 @@ def home_page():
     else:
         return jsonify({"error":"Author not found"}),404
     
+
+    
 #getoneblog
 @app.route('/blog/<id>', methods=['GET'])
 def get_blog(id):
@@ -200,15 +200,28 @@ def get_all_blogs():
         else:
             return jsonify({"message":"No blogs found"}),404
 
-#postblog
+#createnewblog
 @app.route('/blog',methods=['POST'])
 def create_blog():
     data=request.get_json()
     try:
-        blog=Blog(data.get("id"),data.get("name"),data.get("category"),data.get("author_id"))
+        name=data.get("name")
+        email=data.get("email")
+        category=data.get("category")
+        
+        existing_blog = Blog.get_one_by_email(email)
+        if existing_blog:
+            return jsonify({"error": "Email already registered with a different blog"}), 400
+        
+    
+        blog = Blog(name=name, email=email, category=category)
         blog.save_data()
-        return jsonify({"message":"Blog created successfully"})
-    except ValueError as e:
+        
+    
+
+        return jsonify({"message": "Blog created successfully"})
+    
+    except Exception as e:
         return jsonify({"error":str(e)}),400
         
 #putblog
@@ -244,7 +257,16 @@ def delete_blog(id):
     except Exception as e:
         return jsonify({"error":str(e)}),400
 
+#renderaccountcreation
+@app.route('/blogfrontend/blog/blog.html', methods=['GET'])
+def blog_creation_page():
+    return render_template('blogfrontend/blog/blog.html')
 
+
+@app.before_request
+def disable_csrf_for_blog():
+    if request.path=='/blog':
+        return
 
 
 

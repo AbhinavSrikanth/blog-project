@@ -45,7 +45,7 @@ body{
 .header{
   margin-top: 60px;
   width: 100%;
-  height: calc(100vh - 60px);
+  height:850px;
   background-size: cover;
   display: flex;
   justify-content: center;
@@ -124,6 +124,7 @@ body{
   width:10%;
   height:50px;
   width: 150px;
+  border-radius: 10px;
 }
 .b1-image{
   width: 100%;
