@@ -1,11 +1,15 @@
 from database import Database
 class Post:
-    def __init__(self,id,genre,formate,like_count,blog_id):
+    def __init__(self,id,file_type,file_path,like_count,posted_at,comments,post_title,blog_id,text_content):
         self.id=id
-        self.genre=genre
-        self.formate=formate
+        self.file_path=file_path
+        self.file_type=file_type
         self.like_count=like_count
         self.blog_id=blog_id
+        self.posted_at=posted_at
+        self.comments=comments
+        self.post_title=post_title
+        self.text_content=text_content
 
     def save_data(self):
         db=Database()
@@ -18,8 +22,8 @@ class Post:
 
                     if count>0:
                         raise ValueError("Post ID already exists in the table")
-                    insert_query="INSERT INTO post(id,genre,formate,like_count,blog_id) VALUES (%s,%s,%s,%s,%s)"
-                    cursor.execute(insert_query,[self.id,self.genre,self.formate,self.like_count,self.blog_id])
+                    insert_query="INSERT INTO post(id,file_type,file_path,like_count,blog_id,posted_at,comments,text_content) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                    cursor.execute(insert_query,[self.id,self.file_type,self.file_path,self.like_count,self.blog_id,self.posted_at,self.comments,self.text_content])
                     db.connection.commit()
                     print("Post data inserted successfully!")
             except Exception as e:
@@ -94,10 +98,14 @@ class Post:
                     if post_data:
                         post_dict = {
                             'id': post_data[0],
-                            'genre': post_data[1],
-                            'formate': post_data[2],
-                            'like_count': post_data[3],
-                            'blog_id': post_data[4]
+                            'like_count': post_data[1],
+                            'posted_at':post_data[2],
+                            'blog_id': post_data[3],
+                            'comments':post_data[4],
+                            'post_title':post_data[5],
+                            'text_content':post_data[6],
+                            'file_type':post_data[7],
+                            'file_path':post_data[8]
                         }
                         return post_dict
                     else:

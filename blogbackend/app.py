@@ -1,23 +1,45 @@
-from flask import Flask,jsonify,request,render_template,redirect,url_for,session
-import bcrypt
+from flask import Flask,g,jsonify,request,render_template,redirect,url_for,session,make_response
+import bcrypt,os
 from bcrypt import checkpw,gensalt,hashpw
+from flask_login import LoginManager,current_user,UserMixin,login_required,login_user
 from author import Author
 from blog import Blog
 from post import Post
 from comment import Comment
-from flask_cors import CORS
+from flask_cors import CORS,cross_origin,make_response
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.utils import secure_filename
 
 
 
-app=Flask(__name__,static_url_path='/static')
-CORS(app,supports_credentials=True,origins='*')
+UPLOAD_FOLDER='uploads'
+ALLOWED_EXTENSIONS={'jpg','jpeg','png','pdf'}
+template_dir=os.path.abspath('templates')
+app=Flask(__name__,static_url_path='/static',template_folder=template_dir)
+app.config['UPLOAD_FOLDER']=UPLOAD_FOLDER
+CORS(app,supports_credentials=True,origins=['*'])
+
 app.secret_key="whirldata@123"
+app.config['SQLALCHEMY_DATABASE_URI']="postgresql://whirldata:Whirldata@123@localhost/blog"
+db=SQLAlchemy(app)
+login_manager=LoginManager()
+login_manager.init_app(app)
+login_manager.login_view="login"
 
-@app.route('/test', methods=['GET'])
-def test_route():
-    return 'Hello, this is a test route!'
+
+class User(UserMixin):
+    def __init__(self, user_id):
+        self.id = user_id
+
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
 
 
+users = {1: User(1)}
+
+@login_manager.user_loader
+def load_user(user_id):
+    return users.get(int(user_id))
 
 
 #getoneauthor
@@ -144,24 +166,30 @@ def check_user_credentials(password,hashed_password):
     
 
 
-@app.route('/login', methods=['POST'])
+@app.route('/login', methods=['GET', 'POST'])
+@cross_origin(supports_credentials=True)
 def login():
-    data=request.get_json()
-    email=data.get("email")
-    password=data.get("password")
-    
-    try:
-        print(f"Attempting login with email:{email}")
-        author_data=Author.get_one_by_email(email)
-        print("returned author=>",author_data)
+    if request.method == 'POST':
+        data = request.get_json()
+        email = data.get("email")
+        password = data.get("password")
+        response = make_response(jsonify({"message": "Success"}))
+        response.headers['Access-Control-Allow-Origin'] = 'http://127.0.0.1:5500/blogfrontend/login/login.html'
+        return response
+        try:
+            print(f"Attempting login with email: {email}")
+            author_data = Author.get_one_by_email(email)
+            print("returned author =>", author_data)
         
-        if author_data and check_user_credentials(password,author_data[3]):
-            session['user_id']=author_data[0]
-            return redirect('blogfrontend/home/home.html')
-        else:
-            return jsonify({"error":"Invalid email or password"})
-    except Exception as e:
-        return jsonify({"error":str(e)}),400
+            if author_data and check_user_credentials(password, author_data[3]):
+                session['user_id'] = author_data[0]
+                return redirect('blogfrontend/home/home.html')
+            else:
+                return jsonify({"error": "Invalid email or password"})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 400
+    elif request.method == 'GET':
+        return render_template('blogfrontend/login/login.html')
             
     
 @app.route('/home')
@@ -200,7 +228,7 @@ def get_all_blogs():
         else:
             return jsonify({"message":"No blogs found"}),404
 
-#createnewblog
+#createnewblogblog
 @app.route('/blog',methods=['POST'])
 def create_blog():
     data=request.get_json()
@@ -257,7 +285,7 @@ def delete_blog(id):
     except Exception as e:
         return jsonify({"error":str(e)}),400
 
-#renderaccountcreation
+#renderblogcreation
 @app.route('/blogfrontend/blog/blog.html', methods=['GET'])
 def blog_creation_page():
     return render_template('blogfrontend/blog/blog.html')
@@ -273,6 +301,7 @@ def disable_csrf_for_blog():
 
 #getonepost
 @app.route('/post/<id>', methods=['GET'])
+@cross_origin(supports_credentials=True)
 def get_post(id):
     post_id = id
     print("Post Id is present in the request", post_id)
@@ -282,7 +311,12 @@ def get_post(id):
     else:
         return jsonify({"message": "Post not found."}), 404
 
-
+#renderpostcreation
+@app.route('/blogfrontend/post/post.html', methods=['GET'])
+def post_creation_page():
+    return render_template('blogfrontend/post/post.html')
+    
+    
 #getallposts
 @app.route('/post',methods=['GET'])   
 def get_all_posts():
@@ -290,18 +324,67 @@ def get_all_posts():
         if all_posts_data:
             return jsonify(all_posts_data)
         else:
-            return jsonify({"message":"No blogs found"}),404
+            return jsonify({"message":"No posts found"}),404
 
-#postpost
-@app.route('/post',methods=['POST'])
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS     
+
+def get_current_user_id():
+    if current_user.is_authenticated:
+        return current_user.id
+    else:
+        return None
+
+#createnewpost
+@app.route('/blogfrontend/post', methods=['POST'])
+@login_required
 def create_post():
-    data=request.get_json()
-    try:
-        post=Post(data.get("id"),data.get("genre"),data.get("formate"),data.get("like_count"),data.get("blog_id"))
-        post.save_data()
-        return jsonify({"message":"Post created successfully"})
-    except ValueError as e:
-        return jsonify({"error":str(e)}),400
+    print("Reached the create_post route")
+    if request.method == 'POST':
+        data = request.get_json()
+        try:
+            post_title = request.form.get("post_title")
+            text_content = request.form.get("content")
+            file_input = request.form.get("file")
+            current_user_id=get_current_user_id()
+            
+            if file_input and allowed_file(file_input.filename):
+                file_type = os.path.splitext(file_input.filename)[1]
+                unique_filename = os.urandom(24).hex() + file_type
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                file_input.save(file_path)
+                print(f"this file is allowed")
+            else:
+                file_type = None
+                file_path = None
+                
+            if current_user.is_authenticated():
+                current_user_id=current_user.id
+            else:
+                current_user_id=None
+            new_post = Post(
+                id=None,
+                file_type=file_type,
+                file_path=file_path,
+                like_count=0,
+                blog_id=current_user_id,
+                posted_at=None,
+                comments=None,
+                post_title=post_title,
+                text_content=text_content
+            )
+            print("Post Title:", post_title)
+            print("Text Content:", text_content)
+            print("File Input:", file_input)
+            print(f"Creating a new post with the following data:")
+            new_post.save_data()
+
+            return jsonify({"message": "Post created successfully!"})
+        
+        except ValueError as e:
+            print("An error occurred while creating the post:",str(e))
+            return jsonify({"error": "An error occurred while creating the post. Please try again."}), 500
+        
         
 #putpost
 @app.route('/post/<id>',methods=['PUT'])

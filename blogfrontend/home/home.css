@@ -35,9 +35,15 @@ body{
   list-style: none;
 }
 
+.link-item{
+  color: #fff;
+  margin-left: 10px;
+}
+
 .link{
   padding: 10px;
-  margin-left: 10px;
+  margin-right: 5px;
+  margin-left: 5px;
   text-decoration: none;
   text-transform: capitalize;
   color: #fffefe;
@@ -92,6 +98,10 @@ body{
   text-transform: capitalize;
 }
 
+.btn:hover{
+  background-color: #b36f4fde;
+  color: #fff;
+}
 .blogs-section{
   width: 100%;
   padding: 50px 5vw;
@@ -132,4 +142,25 @@ body{
   border-radius: 10px;
   margin-left: 0;
   height:65% 
+}
+
+.or{
+  color: #000000;
+  size: 10em;
+}
+
+.already{
+  color: #ffffff;
+}
+.a{
+  color: #ffffff;
+}
+.wds{
+  margin-left: 0;
+}
+.text-center-text-white{
+  background-color: #f1f1f1;
+}
+.text-center text-dark p-3{
+  background-color: rgba(0, 0, 0, 0.2);
 }
