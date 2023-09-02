@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create a post</title>
+    <link rel="stylesheet" href="../../static/css/post.css">
+    <link rel="stylesheet" href="../../static/css/blog.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="https://whirldatascience.com" title="wds">
+        <img src="../static/images/wds.png" class="logo" alt=""></a>
+        <ul class="links-container">
+            <li class="link-item"><a href="../templates/home.html" class="link">Home</a></li>
+            <li class="link-item" id="link">Settings</li>
+        </ul>
+    </nav>
+    <div class="postForm">
+        <h1 class="createapost">Create a Post</h1>
+    <form class="postcreation" action="https:127.0.0.1:5000/post" enctype="multipart/form-data" method="POST">
+        <label for="title">Title:</label>
+        <input type="text" id="title" name="title" required placeholder="Enter a title"><br><br>
+        
+        <label for="content">Content:</label>
+        <textarea name="content" id="content" rows="1"></textarea><br><br><br>
+
+        <label for="file">Upload Files:</label>
+        <input type="file" name="file" id="file" name="file" accept=".jpg,.jpeg,.png,.pdf,.mp4,.mp3"><br><br>
+        <label for="blogname">Blog Name:</label>
+        <input type="text" name="blogname" class="blogname" id="blogname" placeholder="Blog Name" required>
+        <button type="submit" class="createpostbtn"> Create Post</button>
+    </form>
+</div>
+    <script src=".././static/post.js"></script>
+</body>
+</html>

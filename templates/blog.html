@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create a Blog</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;1,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../static/css/blog.css">
+    <link rel="stylesheet" href="../../static/css/home.css">
+
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="https://whirldatascience.com" title="wds">
+        <img src="../static/images/wds.png" class="logo" alt=""></a>
+        <ul class="links-container">
+            <li class="link-item"><a href="{{ url_for('home') }}" class="link">Home</a></li>
+            <li class="link-item" id="link">Settings</li>
+        </ul>
+    </nav>
+    <div class="dd">
+        <div class="container">
+    <form class="blogcreation" id="blogform" action="/blog" method="POST">
+        <h1>Create your blog!</h1>
+        <input type="text" name="name" id="name" placeholder="Blog Name" required>
+        <label for="category">Category:</label>
+                <select id="category" name="category" required>
+                    <option value="Others">Others</option>
+                    <option value="Technology">Technology</option>
+                    <option value="Travel">Travel</option>
+                    <option value="Food">Food</option>
+                    <option value="Fashion">Fashion</option>
+                    <option value="Health">Health</option>
+                    <option value="Fitness">Fitness</option>
+                    <option value="Lifestyle">Lifestyle</option>
+                    <option value="Business">Business</option>
+                    <option value="Finance">Finance</option>
+                    <option value="Education">Education</option>
+                    <option value="Entertainment">Entertainment</option>
+                </select><br>
+            <br><button class="createblog" type="submit">Create Blog</button>
+    </form>
+<script src='.././static/blog.js'></script>
+</body>
+</html>

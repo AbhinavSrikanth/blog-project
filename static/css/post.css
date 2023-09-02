@@ -69,3 +69,8 @@ margin-left: 5px;
   margin-left: 5px;
   white-space: nowrap;
 }
+#blogname{
+  display: inline-block; 
+  width: 40%;
+  margin-left: 5px;
+  }

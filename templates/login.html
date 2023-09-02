@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" type="text/css" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet"  href="../../static/css/login.css">
+</head>
+<body class="bg">
+    <div class="loginform">
+        <form id="login" class="login" method="POST" action="/login_auth">
+            <h1>Login to your account</h1>
+            <input type="text" id="email" name="email" placeholder="Email" autocomplete="email" required>
+            <input type="password" id="password" name="password" placeholder="Password" autocomplete="current-password" required>
+            <div><button class="LoginButton" type="submit" value="Submit">Login</button></div>
+            <div id="warning"></div>
+        </form>
+    </div>
+</body>
+<script src="../../static/login.js"></script>
+</html>

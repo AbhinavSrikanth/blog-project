@@ -1,6 +1,8 @@
+from flask_sqlalchemy import SQLAlchemy
 from database import Database
+db = SQLAlchemy()
 class Blog:
-    def __init__(self,id=None,name=None,category=None,author_id=None,email=None):
+    def __init__(self,id=None,name=None,category=None,author_id=None,email=None,):
         self.id=id
         self.name=name
         self.category=category
@@ -12,14 +14,8 @@ class Blog:
         if db.connection:
             try:
                 with db.connection.cursor() as cursor:
-                    select_query="SELECT COUNT(*) FROM blog WHERE id=%s"
-                    cursor.execute(select_query,[self.id])
-                    count=cursor.fetchone()[0]
-
-                    if count>0:
-                        raise ValueError("Blog ID already exists in the table")
-                    insert_query="INSERT INTO blog(name,email,category) VALUES (%s,%s,%s)"
-                    cursor.execute(insert_query,[self.name,self.email,self.category])
+                    insert_query="INSERT INTO blog(name,email,category,author_id) VALUES (%s,%s,%s,%s) RETURNING id"
+                    cursor.execute(insert_query,[self.name,self.email,self.category,self.author_id])
                     blog_id=cursor.fetchone()[0]
                     self.id=blog_id
                     db.connection.commit()
@@ -108,24 +104,27 @@ class Blog:
             finally:
                 db.close_connection()
                 
-                
-    @staticmethod
-    def get_one_by_email(email):
+
+
+    def get_one_by_email(self,email):
         db = Database()
         if db.connection:
             try:
                 with db.connection.cursor() as cursor:
-                    select_query = f"SELECT id,name,email,category FROM blog WHERE email = '{email}'"
+                    select_query = f"SELECT name,email,category FROM blog WHERE email = %s"
                     print(select_query)
-                    cursor.execute(select_query)
+                    cursor.execute(select_query,(email,))
                     blog_data = cursor.fetchone()
-                    print("Blog data => ", blog_data)
+                    if blog_data is None:
+                        print("Email not found in the database.")
                     return blog_data
             except Exception as e:
                 print(f"Error: {e}")
 
             finally:
                 db.close_connection()
+                
+                
 
     @staticmethod
     def get_all():
@@ -142,3 +141,20 @@ class Blog:
             return None
         finally:
             db.close_connection()
+            
+            
+    def get_one_by_name(self, email):
+        db = Database()
+        if db.connection:
+            try:
+                with db.connection.cursor() as cursor:
+                    select_query = "SELECT * FROM blog WHERE name = %s"
+                    cursor.execute(select_query, (email,))
+                    blog_data = cursor.fetchone()
+                    if blog_data is None:
+                        print("Blog not found in the database.")
+                    return blog_data  # This line should be part of the try block
+            except Exception as e:
+                print(f"Error: {e}")
+            finally:
+                db.close_connection()

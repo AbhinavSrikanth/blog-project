@@ -1,26 +1,21 @@
 from database import Database
-import bcrypt
+import bcrypt,binascii,traceback
 from datetime import datetime
 from flask import url_for,redirect
-
+from flask_sqlalchemy import SQLAlchemy
+from database import Database
+db = SQLAlchemy()
 
 class Author:
-    def __init__(self,id=None,name=None,email=None,password=None):
+    def __init__(self,id=None,name=None,email=None,password=None,created_at=None,updated_at=None):
         self.id=id
         self.name=name
         self.email=email
         self.password=password
-
+        self.created_at=created_at
+        self.updated_at=updated_at
         
-                
-    def hash_password(self):
-        if isinstance(self.password,bytes):
-            self.password=self.password.decode('utf-8')
-        salt=bcrypt.gensalt()
-        self.password=bcrypt.hashpw(self.password.encode('utf-8'),salt)
 
-    
-    
     def save_data(self):
         db=Database()
         if db.connection:
@@ -29,12 +24,14 @@ class Author:
                     with db.connection:
                         select_query="SELECT COUNT(*) FROM author WHERE id=%s"
                         cursor.execute(select_query,[self.id])
-                        count=cursor.fetchone()[0]
+                        result=cursor.fetchone()
+                        if result is None:
+                            raise ValueError("Fetch result is None")
+                        count = result[0]
 
                     if count>0:
                         raise ValueError("Author ID already exists in the table")
                     
-                    self.hash_password()
                     current_time=datetime.now()
                     insert_query="INSERT INTO author(name,email,hashed_password,created_at,updated_at) VALUES (%s,%s,%s,%s,%s) RETURNING id"
                     cursor.execute(insert_query,[self.name,self.email,self.password,current_time,current_time])
@@ -43,9 +40,27 @@ class Author:
                     db.connection.commit()
                     print("Author data inserted successfully!")
             except Exception as e:
-                print(f"Error:{e}")
-            finally:db.close_connection()
-
+                error_message=f"Error:{e}\n"
+                error_message+=f"Traceback:\n{traceback.format_exc()}"
+                print(error_message)
+            finally:
+                db.close_connection()
+            
+    def get_credentials_by_email(self,email):
+        db = Database()
+        if db.connection:
+            try:
+                with db.connection.cursor() as cursor:
+                    select_query = "SELECT email,hashed_password FROM author WHERE email = %s"
+                    print(f"Executing query: {select_query}")
+                    cursor.execute(select_query,(email,))
+                    print("Query executed successfully")
+            except Exception as e:
+                print(f"Error: fetching credentials:{e}")
+            finally:
+                db.close_connection()
+            
+                        
     def update_data(self,**kwargs):
         db=Database()
         if db.connection:
@@ -63,8 +78,8 @@ class Author:
                             update_values.append(kwargs["email"])
                             
                     if "password" in kwargs and kwargs["password"] is not None:
-                        self.assword = kwargs["password"]
-                        self.hash_password()
+                        self.password = kwargs["password"]
+                        self.hashed_password()
                         update_query += " hashed_password=%s,"
                         update_values.append(self.password)
                         
@@ -83,6 +98,8 @@ class Author:
             
             finally:
                 db.close_connection()
+                
+                
     @staticmethod
     def delete(email):
         db=Database()
@@ -90,7 +107,7 @@ class Author:
             try:
                 with db.connection.cursor() as cursor:
                     delete_query="DELETE FROM author WHERE email= %s"
-                    cursor.execute(delete_query,(email,))
+                    cursor.execute(delete_query,[email])
                     db.connection.commit()
                     print("Author data deleted successfully!")
             except Exception as e:
@@ -98,18 +115,35 @@ class Author:
             finally:
                     db.close_connection()
     
-
-    @staticmethod
-    def get_one_by_email(email):
+    def get_name_from_email(self,email):
         db = Database()
         if db.connection:
             try:
                 with db.connection.cursor() as cursor:
-                    select_query = f"SELECT id,name,email,hashed_password,created_at,updated_at FROM author WHERE email = '{email}'"
+                    select_query = "SELECT name FROM author WHERE email = %s"
                     print(select_query)
-                    cursor.execute(select_query)
+                    cursor.execute(select_query,(email,))
+                    print('Email',email)
                     author_data = cursor.fetchone()
-                    print("Author data => ", author_data)
+                    if author_data is None:
+                        print("Email not found in the database.")
+                    return author_data
+            except Exception as e:
+                print(f"Error: {e}")
+
+            finally:
+                db.close_connection()
+
+    def get_one_by_email(self,email):
+        db = Database()
+        if db.connection:
+            try:
+                with db.connection.cursor() as cursor:
+                    select_query = "SELECT email,hashed_password FROM author WHERE email = %s"
+                    cursor.execute(select_query,(email,))
+                    author_data = cursor.fetchone()
+                    if author_data is None:
+                        print("Email not found in the database.")
                     return author_data
             except Exception as e:
                 print(f"Error: {e}")
@@ -117,7 +151,51 @@ class Author:
             finally:
                 db.close_connection()
                 
-                
+    def get_id_by_email(self,email):
+        db = Database()
+        if db.connection:
+            try:
+                with db.connection.cursor() as cursor:
+                    select_query = "SELECT id FROM author WHERE email = %s"
+                    cursor.execute(select_query,(email,))
+                    author_data = cursor.fetchone()
+                    if author_data is None:
+                        print("Author not found in the database.")
+                    return author_data
+            except Exception as e:
+                print(f"Error: {e}")
+
+            finally:
+                db.close_connection()
+                    
+    def authenticate(self, email, password):
+        db = Database()
+        if db.connection:
+            try:
+                with db.connection.cursor() as cursor:
+                    select_query = "SELECT hashed_password FROM author WHERE email=%s"
+                    cursor.execute(select_query, [email])
+                    user_data = cursor.fetchone()
+                    if user_data:
+                        hashed_password_bytes = bytes.fromhex(user_data[0][2:])
+                        
+                        if bcrypt.checkpw(password.encode('utf-8'), hashed_password_bytes):
+                            print("Password Match!")
+                            return True
+                        else:
+                            print("Password Mismatch!")
+                    else:
+                        print("Email Not Found")
+                    return False
+
+            except Exception as e:
+                print(f"Error: {e}")
+
+            finally:
+                db.close_connection()
+
+            
+   
                 
     @staticmethod
     def get_one(author_id):
@@ -164,10 +242,6 @@ class Author:
                         for author_data in cursor.fetchall()
                     ]
                 return all_authors_data
-            
-            
-    
-            
         except Exception as e:
             print(f"Error:{e}")
             return None

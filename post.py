@@ -1,34 +1,39 @@
 from database import Database
 class Post:
-    def __init__(self,id,file_type,file_path,like_count,posted_at,comments,post_title,blog_id,text_content):
+    def __init__(self,id=None,like_count=None,blogname=None,blog_id=None,posted_at=None,title=None,email=None,content=None):
         self.id=id
-        self.file_path=file_path
-        self.file_type=file_type
         self.like_count=like_count
-        self.blog_id=blog_id
         self.posted_at=posted_at
-        self.comments=comments
-        self.post_title=post_title
-        self.text_content=text_content
+        self.blogname=blogname
+        self.title=title
+        self.blog_id=blog_id
+        self.content=content
 
     def save_data(self):
-        db=Database()
+        db = Database()
         if db.connection:
             try:
                 with db.connection.cursor() as cursor:
-                    select_query="SELECT COUNT(*) FROM post WHERE id=%s"
-                    cursor.execute(select_query,[self.id])
-                    count=cursor.fetchone()[0]
-
-                    if count>0:
-                        raise ValueError("Post ID already exists in the table")
-                    insert_query="INSERT INTO post(id,file_type,file_path,like_count,blog_id,posted_at,comments,text_content) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-                    cursor.execute(insert_query,[self.id,self.file_type,self.file_path,self.like_count,self.blog_id,self.posted_at,self.comments,self.text_content])
-                    db.connection.commit()
-                    print("Post data inserted successfully!")
+                    select_blog_id_query = "SELECT id FROM blog WHERE name = %s;"
+                    cursor.execute(select_blog_id_query, [self.blogname])
+                    blog_id = cursor.fetchone()
+                    if blog_id:
+                        insert_query = """
+                            INSERT INTO post (like_count, posted_at, title, blogname, content)
+                            VALUES (%s, %s, %s, %s, %s, %s)
+                            RETURNING id;
+                        """
+                        cursor.execute(insert_query, (self.like_count, self.posted_at, self.title, self.blogname, self.content))
+                        post_id = cursor.fetchone()[0]
+                        self.id = post_id
+                        db.connection.commit()
+                        print("Post data inserted successfully!")
+                    else:
+                        print("Blog with the specified blogname does not exist")
             except Exception as e:
-                print(f"Error:{e}")
-            finally:db.close_connection()
+                print(f"Error: {e}")
+            finally:
+                db.close_connection()
 
     def update_data(self,**kwargs):
         db=Database()
@@ -132,3 +137,26 @@ class Post:
             return None
         finally:
             db.close_connection()
+            
+            
+            
+    def get_id_by_name(self,blogname):
+        db = Database()
+        if db.connection:
+            try:
+                with db.connection.cursor() as cursor:
+                    select_query = f"SELECT name,email,category FROM blog WHERE blogname = %s"
+                    print(select_query)
+                    cursor.execute(select_query,(blogname,))
+                    blog_data = cursor.fetchone()
+                    if blog_data is None:
+                        print("Blog not found in the database.")
+                    return blog_data
+            except Exception as e:
+                print(f"Error: {e}")
+
+            finally:
+                db.close_connection()
+                
+                
+                

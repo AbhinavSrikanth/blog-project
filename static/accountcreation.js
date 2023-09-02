@@ -30,21 +30,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (response.ok) {
           const data = await response.json();
           alert(data.message);
+          window.location.href='http://127.0.0.1:5000/login_land';
         } else {
           const errorData = await response.json();
-          alert(errorData.error);
+          window.location.href='http://127.0.0.1:5000/accountcreation'
+          alert("error: " + errorData.error);
         }
       } catch (error) {
-        console.error('Error:', error);
+        console.log('Error:', error);
         alert('An error occurred. Please try again later.');
       }
     });
-
-    function redirectToLogin(){
-      console.log("dfghj")
-      window.location.href='../login/login.html';
-    }
-    const loginButton=document.querySelector('button.login');
-    loginButton.addEventListener('click',redirectToLogin)
+    const loginButton=document.getElementById('loginButton');
+    loginButton.addEventListener('click', () => {
+      window.location.href = 'http://127.0.0.1:5000/login_land';
+    });
   });
   

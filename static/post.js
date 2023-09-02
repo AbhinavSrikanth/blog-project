@@ -9,11 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const fileInput = document.getElementById('file').files[0];
   
       const formData = new FormData();
-      formData.append('post_title', title);
+      formData.append('title', title);
       formData.append('content', content);
-      //formData.append('file', fileInput);
       try {
-        const response = await fetch('http://127.0.0.1:5000/blogfrontend/post', {
+        const response = await fetch('http://127.0.0.1:5000/post', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -21,24 +20,23 @@ document.addEventListener('DOMContentLoaded', () => {
           body: JSON.stringify({
             title: title,
             content: content,
-            file:file
+            fileInput:fileInput,
+            blogname:blogname
           })
         });
         
-        console.log('Response status:', response.status);
         if (response.ok) {
           const data = await response.json();
           alert(data.message);
-          console.log('Success:', data.message);
+          window.location.href='http://127.0.0.1:5000/home';
         } else {
           const errorData = await response.json();
-          alert(errorData.error);
-          console.log('Error:', errorData.error);
+          alert("error: " + errorData.error);
         }
-      } catch (error) {
-        console.error('Error:', error);
-        alert('An error occurred. Please try again later.');
-      }
+        } catch(error){
+            console.log('Error Details',error)
+            alert('An error occurred. Please try again later.');
+        }
     });
   });
   

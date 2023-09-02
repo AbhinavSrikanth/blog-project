@@ -1,4 +1,7 @@
+from flask_sqlalchemy import SQLAlchemy
 from database import Database
+db = SQLAlchemy()
+
 class Comment:
     def __init__(self,id,c_type,post_id):
         self.id=id

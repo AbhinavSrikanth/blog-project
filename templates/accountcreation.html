@@ -2,18 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" type="text/css" content="width=device-width, initial-scale=1.0">
   <title>Create an Account</title>
-  <link rel="stylesheet" href="./accountcreation.css">
+  <link rel="stylesheet" href="../../static/css/accountcreation.css">
 </head>
 <body>
     <div class="image-container">
-        <img id="img" src="../images/img.png" alt="">
+        <img id="img" src="../../static/images/img.png" alt="">
     </div>
    
     <div class="dd">
   <div class="container">
-    <form class="accountcreation" action="/register" method="POST">
+    <form id="accountcreation" class="accountcreation" method="POST" action="/register">
       <h1>Hi,create an account for free!</h1>
       <input type="text" name="name" id="name" placeholder="Name" required>
       <input type="email" name="email" id="email" placeholder="Email" required>
@@ -21,10 +21,10 @@
       <input type="password" name="confirm_password" id="confirm_password" placeholder="Confirm Password" required>
       <button class="createaccount" type="submit">Create Account</button>
       <div class="or">Or</div>
-      <button class="login" type="button" onclick="redirectToLogin()">Login</button>
+      <button id="loginButton" class="login" type="button">Login</button>
     </form>
   </div>
 </div>
-<script src="./accountcreation.js"></script>
+<script src="../../static/accountcreation.js"></script>
 </body>
 </html>
