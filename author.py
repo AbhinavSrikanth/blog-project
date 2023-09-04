@@ -22,7 +22,7 @@ class Author:
             try:
                 with db.connection.cursor() as cursor:
                     with db.connection:
-                        select_query="SELECT COUNT(*) FROM author WHERE id=%s"
+                        select_query="SELECT COUNT(*) FROM blog WHERE id=%s"
                         cursor.execute(select_query,[self.id])
                         result=cursor.fetchone()
                         if result is None:
