@@ -1,7 +1,8 @@
-from flask import Flask,jsonify,request,render_template,redirect,session,Blueprint,url_for,flash
+from flask import Flask,jsonify,request,render_template,redirect,session,Blueprint,url_for,flash,abort
 from flask_session import Session
-import os,logging, hashlib
+import os,logging, hashlib,base64
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.utils import secure_filename
 from flask_login import LoginManager,current_user,UserMixin,login_required
 from database import Database
 from author import Author
@@ -9,6 +10,7 @@ from blog import Blog
 from post import Post
 from comment import Comment
 from flask_cors import CORS
+from random import sample
 
 
 UPLOAD_FOLDER='uploads'
@@ -210,14 +212,21 @@ def home_page():
     
 @app.route('/home' , methods=['GET'])
 def home():
-    email=session.get('email')
-    logging.debug("Session User Email: %s",email)
-    if email:
-        user_details = Author().get_name_from_email(email)
-        name=user_details[0]
-        return render_template('home.html',username=name)
-    else:
-        return redirect(url_for('login_auth'))
+    try:
+        email=session.get('email')
+
+        logging.debug("Session User Email: %s",email)
+
+        if email:
+            user_details = Author().get_name_from_email(email)
+            name=user_details
+
+            return render_template('home.html',username=name)
+        else:
+            return redirect(url_for('login_auth'))
+    except Exception as e:
+        logging.error("Error fetching random post:%s",e)
+        return jsonify({"error":"Internal Server Error"}),500
 
 
 #renderblogcreation
@@ -228,7 +237,7 @@ def blog_creation_page():
 #createnewblogblog
 @app.route('/blog',methods=['POST'])
 def create_blog():
-    data=request.get_json()
+    data=request.form()
     try:
         name=data.get("name")
         email=session.get("email")
@@ -271,20 +280,35 @@ def get_current_user_id():
 @app.route('/createpost', methods=['GET'])
 def post_creation_page():
     return render_template('post.html')
-    
-    
+
+   
 #createnewpost
 @app.route('/post', methods=['POST'])
 def post():
-    data=request.get_json()
+    data=request.form
     try:
         title=data.get("title")
         content=data.get("content")
         email=session.get("email")
         blogname=data.get("blogname")
-        post = Post(title=title, content=content, blogname=blogname,email=email)
-        post.save_data()
+        cover_image=request.files.get("coverImage")
+
+        if not (title and content and email and blogname and cover_image):
+            return jsonify({"error": "Incomplete data provided"}), 400
+        
+        blog_id=Blog().get_id_by_blogname(blogname)
+        if blog_id is None:
+            return jsonify({"error": "Blogname does not exist"}), 400
+        
+        image_data=None
+        if cover_image is not None:
+            image_data=base64.b64encode(cover_image.read()).decode('utf-8')
+        
+        post = Post(title=title, email=email, blogname=blogname, content=content, blog_id=blog_id)
+        post.save_data(image_data)
+
         return jsonify({"message": "Post created successfully"})
+    
     except Exception as e:
         return jsonify({"error":str(e)}),400
 
@@ -322,10 +346,58 @@ def delete_post(id):
     except Exception as e:
         return jsonify({"error":str(e)}),400
 
+@app.route('/user-posts', methods=['GET'])
+def user_posts():
+    try:
+        posts=Post().get_random_posts_from_database()
+        print(posts)
+        for post in posts:
+            if 'cover_image' in post and post['cover_image'] is not None:
+                post['cover_image'] = base64.b64encode(post['cover_image']).decode('utf-8')
+        return jsonify(posts=posts)
+    except Exception as e:
+        # logging.error(f"Error fetching random posts:{e}")
+        return jsonify({"error":"Internal  Server Error"}),500
 
+@app.route('/post_details/<int:post_id>')
+def post_details(post_id):
+    try:
+        post=Post().get_post_by_id(post_id)
+        email=session.get("email")
+        post_id=session.get('post_id',None)
+        print('Session:',email)
+        post=Post().get_post_by_id(post_id)
+        print(post)
+        session['post_id']=post_id
+        print(session['post_id'])
+        # if email:
+        author_name=Author().get_name_from_email(email)
+        print(author_name)
 
+        existing_comments = Comment().get_comments_by_post_id(post_id)
+        print(existing_comments)
+        if post is None:
+            abort(404)
+        author_name=Author().get_name_from_email(email)
+        blog_name=Blog().get_name_from_email(email)
+        cover_image_blob=post.get("cover_image")
+        cover_image_base64=base64.b64encode(cover_image_blob).decode('utf-8')
+        return render_template('post_details.html',post=post,cover_image_base64=cover_image_base64,author_name=author_name,blog_name=blog_name,comments=existing_comments)
+    except Exception as e:
+        # logging.error("Error fetching post details:%s",e)
+        return jsonify({"error":"Internal Server Error"}),500
 
+# Import necessary modules and classes
 
+# Define a route for fetching comments by post_id
+@app.route('/comments/<int:post_id>', methods=['GET'])
+def get_comments_by_post_id(post_id):
+    try:
+        comments = Comment().get_comments_by_post_id(post_id)
+        comments_list = [{'author_name': comment.author_name, 'comment': comment.comment} for comment in comments]
+        return jsonify(comments_list)
+    except Exception as e:
+        return jsonify({"error": "Internal Server Error"}), 500
 
 #getonecomment
 @app.route('/comment/<id>', methods=['GET'])
@@ -339,6 +411,7 @@ def get_comment(id):
         return jsonify({"message": "Blog not found."}), 404
 
 
+
 #getallcomments
 @app.route('/comment',methods=['GET'])   
 def get_all_comments():
@@ -349,12 +422,18 @@ def get_all_comments():
             return jsonify({"message":"No comments found"}),404
 
 #postcomment
-@app.route('/comment',methods=['POST'])
+@app.route('/comments',methods=['POST'])
 def create_comment():
-    data=request.get_json()
+    data=request.form
     try:
-        blog=Comment(data.get("id"),data.get("c_type"),data.get("post_id"))
-        blog.save_data()
+        print('hi')
+        email=session.get("email")
+        comment=data.get("comment")
+        author_id=Author().get_id_by_email(email)
+        post_id=session.get('post_id',None)
+        print(author_id,post_id)
+        comment=Comment(comment=comment,author_id=author_id,post_id=post_id)
+        comment.save_data()
         return jsonify({"message":"Comment created successfully"})
     except ValueError as e:
         return jsonify({"error":str(e)}),400

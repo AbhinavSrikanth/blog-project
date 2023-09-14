@@ -121,13 +121,11 @@ class Author:
             try:
                 with db.connection.cursor() as cursor:
                     select_query = "SELECT name FROM author WHERE email = %s"
-                    print(select_query)
                     cursor.execute(select_query,(email,))
-                    print('Email',email)
                     author_data = cursor.fetchone()
                     if author_data is None:
                         print("Email not found in the database.")
-                    return author_data
+                    return author_data[0]
             except Exception as e:
                 print(f"Error: {e}")
 
@@ -168,6 +166,8 @@ class Author:
             finally:
                 db.close_connection()
                     
+
+
     def authenticate(self, email, password):
         db = Database()
         if db.connection:

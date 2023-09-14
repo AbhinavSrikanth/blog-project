@@ -1,12 +1,15 @@
 from flask_sqlalchemy import SQLAlchemy
 from database import Database
+from datetime import datetime
 db = SQLAlchemy()
 
 class Comment:
-    def __init__(self,id,c_type,post_id):
+    def __init__(self,id=None,commentedat=None,post_id=None,author_id=None,comment=None):
         self.id=id
-        self.c_type=c_type
+        self.commentedat=commentedat
         self.post_id=post_id
+        self.comment=comment
+        self.author_id=author_id
 
 
     def save_data(self):
@@ -14,19 +17,26 @@ class Comment:
         if db.connection:
             try:
                 with db.connection.cursor() as cursor:
-                    select_query="SELECT COUNT(*) FROM comment WHERE id=%s"
-                    cursor.execute(select_query,[self.id])
-                    count=cursor.fetchone()[0]
-
-                    if count>0:
-                        raise ValueError("Comment ID already exists in the table")
-                    insert_query="INSERT INTO comment(id,c_type,post_id) VALUES (%s,%s,%s)"
-                    cursor.execute(insert_query,[self.id,self.c_type,self.post_id])
+                    current_time=datetime.now()
+                    print(f"post_id: {self.post_id}")
+                    print(f"comment: {self.comment}")
+                    insert_query="INSERT INTO comment(commentedat,post_id,author_id,comment) VALUES (%s,%s,%s,%s) RETURNING id"
+                    cursor.execute(insert_query,[
+                        current_time,
+                        self.post_id,
+                        self.author_id,
+                        self.comment
+                    ])
+                    print()
+                    comment_id=cursor.fetchone()[0]
+                    self.id=comment_id
                     db.connection.commit()
                     print("Comment data inserted successfully!")
             except Exception as e:
                 print(f"Error:{e}")
             finally:db.close_connection()
+
+
 
     def update_data(self,**kwargs):
         db=Database()
@@ -121,3 +131,34 @@ class Comment:
             return None
         finally:
             db.close_connection()
+            
+    def get_comments_by_post_id(self,post_id):
+        db=Database()
+        if db.connection:
+            try:
+                with db.connection.cursor() as cursor:
+                    print('Entered comment fetching function')
+                    select_query="SELECT comment FROM comment WHERE post_id = %s"
+                    cursor.execute(select_query,(post_id,))
+                    comment_data=cursor.fetchall()
+                    if comment_data is None:
+                        print("Be the first to comment on this topic.")
+                    return comment_data
+            except Exception as e:
+                print(f"Error:{e}")
+                
+                
+        def get_commentid_by_post_id(self,post_id):
+            db=Database()
+            if db.connection:
+                try:
+                    with db.connection.cursor() as cursor:
+                        print('Entered comment fetching function')
+                        select_query="SELECT id FROM comment WHERE post_id = %s"
+                        cursor.execute(select_query,(post_id,))
+                        comment_data=cursor.fetchall()
+                        if comment_data is None:
+                            print("Be the first to comment on this topic.")
+                        return comment_data
+                except Exception as e:
+                    print(f"Error:{e}")

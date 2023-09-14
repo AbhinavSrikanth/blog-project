@@ -1,39 +1,87 @@
 from database import Database
+from datetime import datetime
+import os
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
+
 class Post:
-    def __init__(self,id=None,like_count=None,blogname=None,blog_id=None,posted_at=None,title=None,email=None,content=None):
+    def __init__(self,id=None,like_count=None,email=None,blogname=None,blog_id=None,posted_at=None,title=None,content=None, cover_image=None):
         self.id=id
         self.like_count=like_count
         self.posted_at=posted_at
         self.blogname=blogname
         self.title=title
+        self.email=email
         self.blog_id=blog_id
         self.content=content
+        self.cover_image=cover_image
 
-    def save_data(self):
+    def save_data(self,image_data):
         db = Database()
         if db.connection:
             try:
                 with db.connection.cursor() as cursor:
-                    select_blog_id_query = "SELECT id FROM blog WHERE name = %s;"
-                    cursor.execute(select_blog_id_query, [self.blogname])
-                    blog_id = cursor.fetchone()
-                    if blog_id:
-                        insert_query = """
-                            INSERT INTO post (like_count, posted_at, title, blogname, content)
-                            VALUES (%s, %s, %s, %s, %s, %s)
-                            RETURNING id;
-                        """
-                        cursor.execute(insert_query, (self.like_count, self.posted_at, self.title, self.blogname, self.content))
+                        current_time=datetime.now()
+                        insert_query = """INSERT INTO post (title, email, blogname, content, blog_id, like_count, posted_at, cover_image) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id;"""
+                        cursor.execute(insert_query, [
+                        self.title,
+                        self.email,
+                        self.blogname,
+                        self.content,
+                        self.blog_id,
+                        0,
+                        current_time,
+                        image_data
+                    ])
                         post_id = cursor.fetchone()[0]
                         self.id = post_id
                         db.connection.commit()
                         print("Post data inserted successfully!")
-                    else:
-                        print("Blog with the specified blogname does not exist")
             except Exception as e:
                 print(f"Error: {e}")
             finally:
                 db.close_connection()
+
+
+
+    def get_random_posts_from_database(self):
+        db = Database()
+        if db.connection:
+            try:
+                with db.connection.cursor() as cursor:
+                    random_post_query = "SELECT id, title, cover_image FROM post ORDER BY RANDOM() LIMIT 2"
+                    cursor.execute(random_post_query)
+                    random_posts = cursor.fetchall()
+                    posts_data=[{"id":id,"title":title,"cover_image":cover_image} for (id,title,cover_image) in random_posts if cover_image is not None]
+                    return posts_data
+            except Exception as e:
+                print(f"Error fetching random posts:{e}")
+            finally:
+                db.close_connection()
+
+    def get_post_by_id(self,id):
+        db = Database()
+        if db.connection:
+            try:
+                with db.connection.cursor() as cursor:
+                    get_post_query = "SELECT title, cover_image, content FROM post WHERE id = %s;"
+                    cursor.execute(get_post_query, (id,))
+                    post_data = cursor.fetchone()
+                    if post_data:
+                        post = {
+                            "title": post_data[0],
+                            "cover_image": post_data[1],
+                            "content": post_data[2],
+                        }
+                        return post
+                    else:
+                        return None
+            except Exception as e:
+                print(f"Error fetching post by id: {e}")
+            finally:
+                db.close_connection()
+
 
     def update_data(self,**kwargs):
         db=Database()
@@ -137,26 +185,4 @@ class Post:
             return None
         finally:
             db.close_connection()
-            
-            
-            
-    def get_id_by_name(self,blogname):
-        db = Database()
-        if db.connection:
-            try:
-                with db.connection.cursor() as cursor:
-                    select_query = f"SELECT name,email,category FROM blog WHERE blogname = %s"
-                    print(select_query)
-                    cursor.execute(select_query,(blogname,))
-                    blog_data = cursor.fetchone()
-                    if blog_data is None:
-                        print("Blog not found in the database.")
-                    return blog_data
-            except Exception as e:
-                print(f"Error: {e}")
-
-            finally:
-                db.close_connection()
-                
-                
-                
+        

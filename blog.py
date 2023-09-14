@@ -9,12 +9,13 @@ class Blog:
         self.author_id=author_id
         self.email=email
     
+    
     def save_data(self):
         db=Database()
         if db.connection:
             try:
                 with db.connection.cursor() as cursor:
-                    insert_query="INSERT INTO blog(name,email,category,author_id) VALUES (%s,%s,%s,%s) RETURNING id"
+                    insert_query="""INSERT INTO blog(name,email,category,author_id) VALUES (%s,%s,%s,%s) RETURNING id;"""
                     cursor.execute(insert_query,[self.name,self.email,self.category,self.author_id])
                     blog_id=cursor.fetchone()[0]
                     self.id=blog_id
@@ -106,26 +107,39 @@ class Blog:
                 
 
 
-    def get_one_by_email(self,email):
+    def get_id_by_blogname(self,name):
         db = Database()
         if db.connection:
             try:
                 with db.connection.cursor() as cursor:
-                    select_query = f"SELECT name,email,category FROM blog WHERE email = %s"
+                    select_query = "SELECT id FROM blog WHERE name = %s"
+                    cursor.execute(select_query,(name,))
                     print(select_query)
-                    cursor.execute(select_query,(email,))
                     blog_data = cursor.fetchone()
                     if blog_data is None:
-                        print("Email not found in the database.")
-                    return blog_data
+                        print("Blog not found in the database.")
+                    return blog_data[0]
             except Exception as e:
                 print(f"Error: {e}")
 
             finally:
                 db.close_connection()
                 
+    def get_name_from_email(self,email):
+        db = Database()
+        if db.connection:
+            try:
+                with db.connection.cursor() as cursor:
+                    select_query = "SELECT name FROM blog WHERE email = %s"
+                    cursor.execute(select_query,(email,))
+                    author_data = cursor.fetchone()
+                    if author_data is None:
+                        print("Blog not found in the database.")
+                    return author_data[0]
+            except Exception as e:
+                print(f"Error: {e}")
                 
-
+                
     @staticmethod
     def get_all():
         db=Database()

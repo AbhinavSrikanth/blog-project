@@ -103,7 +103,7 @@ body{
   background-color: #b36f4fde;
   color: #fff;
 }
-.post{
+.postButton{
   padding: 10px 20px;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.7);
@@ -126,7 +126,7 @@ body{
   background-color: #b36f4fde;
   color: #fff;
 }
-.post:hover{
+.postButton:hover{
   background-color: #b36f4fde;
   color: #fff;
 }
@@ -161,7 +161,7 @@ body{
   background: #000000;
   color: #fff;
 }
-.post.dark{
+.postButton.dark{
   background: #000000;
   color: #fff;
 }
@@ -207,4 +207,15 @@ body{
 .header .username{
   font-style: italic;
   -webkit-text-stroke: 2px #ffffff;
+}
+.post-container {
+  display: flex;
+  flex-wrap: wrap; 
+  gap: 20px;
+}
+
+.post {
+  flex: 1; 
+  max-width: calc(50% - 10px);
+  padding: 10px;
 }

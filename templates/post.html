@@ -12,8 +12,8 @@
         <a href="https://whirldatascience.com" title="wds">
         <img src="../static/images/wds.png" class="logo" alt=""></a>
         <ul class="links-container">
-            <li class="link-item"><a href="../templates/home.html" class="link">Home</a></li>
-            <li class="link-item" id="link">Settings</li>
+            <li class="link-item"><a href="{{ url_for('home') }}" class="link">Home</a></li>
+            <li class="link-item"><a href="{{ url_for('account_creation_page') }}" class="link">Create an Account or Login</a></li><li class="link-item" id="link">Settings</li>
         </ul>
     </nav>
     <div class="postForm">
@@ -26,7 +26,7 @@
         <textarea name="content" id="content" rows="1"></textarea><br><br><br>
 
         <label for="file">Upload Files:</label>
-        <input type="file" name="file" id="file" name="file" accept=".jpg,.jpeg,.png,.pdf,.mp4,.mp3"><br><br>
+        <input type="file" name="coverImage" id="coverImage" accept=".jpg, .jpeg, .png, .webp"><br><br>
         <label for="blogname">Blog Name:</label>
         <input type="text" name="blogname" class="blogname" id="blogname" placeholder="Blog Name" required>
         <button type="submit" class="createpostbtn"> Create Post</button>

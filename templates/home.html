@@ -16,8 +16,8 @@
         <a href="https://whirldatascience.com" title="wds" class="wds">
         <img src="../../static/images/wds.png" class="logo" alt=""></a>
         <ul class="links-container">
-            <li class="link-item"><a href="{{ url_for('home') }}" class="link">home</a></li>
-            <li class="link-item">Settings</li>
+            <li class="link-item"><a href="{{ url_for('home') }}" class="link">Home</a></li>
+            <li class="link-item"><a href="{{ url_for('account_creation_page') }}" class="link">Create an Account or Login</a></li>
         </ul>
     </nav>
     <header class="header">
@@ -30,24 +30,22 @@
             </h1>
             <button id="blogButton" class="blog" type="button">create a blog</button><br><br>
             <span class="already">Already <span class="have"> have<span class="a"> a blog?</span></span></span><br><br>
-            <button id="postButton" class="post" type="button">create your post</button>
+            <button id="postButton" class="postButton" type="button">create your post</button>
         </div>
     </header>
-    <section class="blogs-section">
-        <div>
-        <img src="../static/images/typing.jpg" class="typing-image" alt="">
-        <h1 class="blog-title">DMTV Milkshake: Studio V Founder Jay Valgora on Why Cities Are Our “Greatest Invention”</h1>
-            <p class="blog-overview">In this Milkshake, Studio V Architecture founder + principal Jay Valgora shares that he wants to make cities better through community-minded design and how urban spaces can regain their power + brilliance.</p>
-            <br><a href="/" class="read">read</a>
-    </div>
-
-        <div class="blog-card">
-            <img src="../static/images/b1.jpg" class="b1-image" alt="">
-            <h1 class="blog-title">AI-Enhanced Samsung Bespoke Vacuums Get Smarter, More Efficient</h1>
-            <p class="blog-overview">The AI-enhanced Samsung Bespoke Jet AI is released with several notable per`ance and efficiency improvements that distinguish it from its predecessor.</p>
-            <br><a href="/" class="read">read</a>
+    <div id="postContainer" class="post-container">
+        {% for post in posts %}
+        <div class="post-details">
+            <h2>{{ post.title }}</h2>
+            <div>
+            <img src="data:image/jpeg;base64,{{ post.cover_image }}" alt="{{ post.title }}">
+            </div>
+        <div class="read-more">
+            <a href="{{ url_for('post_details',post_id=post.id)}}">Read More</a>
         </div>
-    </section>
+        </div>
+        {% endfor %}
+    </div>
 </body>
 <script src=".././static/home.js"></script>
 </html> 

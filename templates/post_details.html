@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post Details</title>
+</head>
+<body>
+<div class="post-details">
+    <h1>{{ post.title }}</h1>
+    <img id="post-image" src="data:image/jpeg;base64,{{ post.cover_image_base64 }}" alt="Post_Image">
+    <p>{{ post.content }}</p>
+    <p>Author: {{ author_name }}</p>
+    <p>Blog Name: {{ blog_name }}</p>
+    <h2>Comments</h2>
+<h2>Add a Comment:</h2>
+<form id="comment-form" class="comment" name="comment-form" method="POST" action="/comments">
+    <div class="form-group">
+        <textarea id="comment" name="comment" class="form-control" rows="4" placeholder="Write your comment here" required></textarea>
+    </div>
+    <input type="hidden" id="post_id" name="post_id" value="{{ postId }}">
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+<ul id="comments-list">
+    {% for comment in comments %}
+    <li>
+        <strong>{{ comment.author_name }}:</strong> {{ comment.comment }}
+    </li>
+    {% endfor %}
+</ul>
+
+</div>
+
+
+</body>
+<script src=".././static/post_details.js"></script>
+</html>
