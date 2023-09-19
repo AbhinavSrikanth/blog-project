@@ -7,11 +7,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const postId = extractPostIdFromUrl();
   const commentForm = document.querySelector('#comment-form');
-  const commentsList = document.querySelector('#comments-list'); // Assuming you have an element with id="comments-list"
+  const commentsList = document.querySelector('#comments-list'); 
 
   function appendCommentItem(authorName, commentText) {
     const commentItem = document.createElement('li');
-    commentItem.innerHTML = `<strong>${authorName}:</strong> ${commentText}`;
+    commentItem.innerHTML = `<strong>${authorName}</strong> ${commentText}`;
     commentsList.appendChild(commentItem);
   }
 
@@ -21,12 +21,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (response.ok) {
         const existingComments = await response.json();
+        console.log('Received comments:',existingComments);
         commentsList.innerHTML = '';
         existingComments.forEach((comment) => {
           appendCommentItem(comment.author_name, comment.comment);
         });
-      } else {
-        console.log('Error:', response.status);
       }
     } catch (error) {
       console.log('An error occurred while fetching existing comments', error);

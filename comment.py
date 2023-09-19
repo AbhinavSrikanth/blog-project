@@ -37,7 +37,26 @@ class Comment:
             finally:db.close_connection()
 
 
+    def get_author_id_by_comment_id(self, id):
+        db = Database()
+        if db.connection:
+            try:
+                with db.connection.cursor() as cursor:
+                    print('hi')
+                    select_query = "SELECT author_id FROM comment WHERE id=%s"
+                    print(select_query)
+                    cursor.execute(select_query, (id,))
+                    author_id = cursor.fetchone()[0]
+                    print(author_id)
+                    self.author_id = author_id
+                    db.connection.commit()
+                    print(author_id)
+            except Exception as e:
+                print(f"Error: {e}")
+            finally:
+                db.close_connection()
 
+                    
     def update_data(self,**kwargs):
         db=Database()
         if db.connection:
@@ -132,33 +151,20 @@ class Comment:
         finally:
             db.close_connection()
             
-    def get_comments_by_post_id(self,post_id):
-        db=Database()
+    def get_comments_by_post_id_with_author(self, post_id):
+        db = Database()
         if db.connection:
             try:
                 with db.connection.cursor() as cursor:
                     print('Entered comment fetching function')
-                    select_query="SELECT comment FROM comment WHERE post_id = %s"
-                    cursor.execute(select_query,(post_id,))
-                    comment_data=cursor.fetchall()
-                    if comment_data is None:
+                    select_query = "SELECT comment.comment, author.name FROM comment INNER JOIN author ON comment.author_id = author.id WHERE comment.post_id = %s"
+                    print(select_query)
+                    cursor.execute(select_query, (post_id,))
+                    comment_data = cursor.fetchall()
+                    if not comment_data:
                         print("Be the first to comment on this topic.")
                     return comment_data
             except Exception as e:
-                print(f"Error:{e}")
-                
-                
-        def get_commentid_by_post_id(self,post_id):
-            db=Database()
-            if db.connection:
-                try:
-                    with db.connection.cursor() as cursor:
-                        print('Entered comment fetching function')
-                        select_query="SELECT id FROM comment WHERE post_id = %s"
-                        cursor.execute(select_query,(post_id,))
-                        comment_data=cursor.fetchall()
-                        if comment_data is None:
-                            print("Be the first to comment on this topic.")
-                        return comment_data
-                except Exception as e:
-                    print(f"Error:{e}")
+                print(f"Error: {e}")
+            finally:
+                db.close_connection()

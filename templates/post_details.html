@@ -22,17 +22,19 @@
     <input type="hidden" id="post_id" name="post_id" value="{{ postId }}">
     <button type="submit" class="btn btn-primary">Submit</button>
 </form>
+
 <ul id="comments-list">
-    {% for comment in comments %}
+<div>
+ <pre>{{ comments_with_author }}</pre>
+    {% for comment,author_name in existing_comments %}
     <li>
-        <strong>{{ comment.author_name }}:</strong> {{ comment.comment }}
+        {{ author_name }}: {{ comment }}
     </li>
+    <li>Loop Iteration</li>
     {% endfor %}
-</ul>
-
 </div>
-
-
+</ul>
+</div>
 </body>
 <script src=".././static/post_details.js"></script>
 </html>

@@ -4,6 +4,7 @@ import os,logging, hashlib,base64
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
 from flask_login import LoginManager,current_user,UserMixin,login_required
+from collections import namedtuple
 from database import Database
 from author import Author
 from blog import Blog
@@ -364,7 +365,8 @@ def post_details(post_id):
     try:
         post=Post().get_post_by_id(post_id)
         email=session.get("email")
-        post_id=session.get('post_id',None)
+        session['post_id']=post_id
+        print('Post_id:',post_id)
         print('Session:',email)
         post=Post().get_post_by_id(post_id)
         print(post)
@@ -373,8 +375,7 @@ def post_details(post_id):
         # if email:
         author_name=Author().get_name_from_email(email)
         print(author_name)
-
-        existing_comments = Comment().get_comments_by_post_id(post_id)
+        existing_comments = Comment().get_comments_by_post_id_with_author(post_id)
         print(existing_comments)
         if post is None:
             abort(404)
@@ -382,22 +383,41 @@ def post_details(post_id):
         blog_name=Blog().get_name_from_email(email)
         cover_image_blob=post.get("cover_image")
         cover_image_base64=base64.b64encode(cover_image_blob).decode('utf-8')
-        return render_template('post_details.html',post=post,cover_image_base64=cover_image_base64,author_name=author_name,blog_name=blog_name,comments=existing_comments)
+        return render_template('post_details.html',post=post,cover_image_base64=cover_image_base64,author_name=author_name,blog_name=blog_name)
     except Exception as e:
         # logging.error("Error fetching post details:%s",e)
         return jsonify({"error":"Internal Server Error"}),500
-
-# Import necessary modules and classes
-
-# Define a route for fetching comments by post_id
-@app.route('/comments/<int:post_id>', methods=['GET'])
+    
+#postcomment
+@app.route('/comments',methods=['POST'])
+def create_comment():
+    data=request.form
+    try:
+        print('hi')
+        email=session.get("email")
+        comment=data.get("comment")
+        author_id=Author().get_id_by_email(email)
+        post_id=session.get('post_id',None)
+        print(author_id,post_id)
+        comment=Comment(comment=comment,author_id=author_id,post_id=post_id)
+        comment.save_data()
+        return jsonify({"message":"Comment created successfully"})
+    except ValueError as e:
+        return jsonify({"error":str(e)}),400
+    
+@app.route('/comments/<int:post_id>')
 def get_comments_by_post_id(post_id):
     try:
-        comments = Comment().get_comments_by_post_id(post_id)
-        comments_list = [{'author_name': comment.author_name, 'comment': comment.comment} for comment in comments]
-        return jsonify(comments_list)
+        comments = Comment().get_comments_by_post_id_with_author(post_id)
+        if comments is None:
+            return jsonify({"error": "No comments found for this post"}), 404
+        comments_list = [{'author_name': comment.author.name, 'comment': comment.comment} for comment in comments]
+        print(comments_list)
+        return render_template('post_details.html',comments=comments_list)
     except Exception as e:
-        return jsonify({"error": "Internal Server Error"}), 500
+        return jsonify({"error": str(e)}), 500
+
+
 
 #getonecomment
 @app.route('/comment/<id>', methods=['GET'])
@@ -421,22 +441,7 @@ def get_all_comments():
         else:
             return jsonify({"message":"No comments found"}),404
 
-#postcomment
-@app.route('/comments',methods=['POST'])
-def create_comment():
-    data=request.form
-    try:
-        print('hi')
-        email=session.get("email")
-        comment=data.get("comment")
-        author_id=Author().get_id_by_email(email)
-        post_id=session.get('post_id',None)
-        print(author_id,post_id)
-        comment=Comment(comment=comment,author_id=author_id,post_id=post_id)
-        comment.save_data()
-        return jsonify({"message":"Comment created successfully"})
-    except ValueError as e:
-        return jsonify({"error":str(e)}),400
+
         
 #putcomment
 @app.route('/comment/<id>',methods=['PUT'])

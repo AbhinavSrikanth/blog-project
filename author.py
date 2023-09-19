@@ -149,6 +149,21 @@ class Author:
             finally:
                 db.close_connection()
                 
+    def get_name_by_id(self,id):
+        db = Database()
+        if db.connection:
+            try:
+                with db.connection.cursor() as cursor:
+                    select_query = "SELECT name FROM author WHERE id = %s"
+                    cursor.execute(select_query,(id,))
+                    author_data = cursor.fetchone()
+                    return author_data
+            except Exception as e:
+                print(f"Error: {e}")
+
+            finally:
+                db.close_connection()
+     
     def get_id_by_email(self,email):
         db = Database()
         if db.connection:
@@ -156,16 +171,13 @@ class Author:
                 with db.connection.cursor() as cursor:
                     select_query = "SELECT id FROM author WHERE email = %s"
                     cursor.execute(select_query,(email,))
-                    author_data = cursor.fetchone()
-                    if author_data is None:
-                        print("Author not found in the database.")
-                    return author_data
+                    author_id = cursor.fetchone()
+                    return author_id
             except Exception as e:
                 print(f"Error: {e}")
 
             finally:
-                db.close_connection()
-                    
+                db.close_connection()               
 
 
     def authenticate(self, email, password):
