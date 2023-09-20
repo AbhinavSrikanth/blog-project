@@ -364,6 +364,7 @@ def user_posts():
 def post_details(post_id):
     try:
         post=Post().get_post_by_id(post_id)
+        print(post)
         email=session.get("email")
         session['post_id']=post_id
         print('Post_id:',post_id)
@@ -373,17 +374,17 @@ def post_details(post_id):
         session['post_id']=post_id
         print(session['post_id'])
         # if email:
-        author_name=Author().get_name_from_email(email)
+        author_name=Post().get_author_name_by_post_id(post_id)
         print(author_name)
         existing_comments = Comment().get_comments_by_post_id_with_author(post_id)
         print(existing_comments)
         if post is None:
             abort(404)
-        author_name=Author().get_name_from_email(email)
-        blog_name=Blog().get_name_from_email(email)
+        blog_name=Post().get_blog_name_by_post_id(post_id)
+        print(blog_name)
         cover_image_blob=post.get("cover_image")
         cover_image_base64=base64.b64encode(cover_image_blob).decode('utf-8')
-        return render_template('post_details.html',post=post,cover_image_base64=cover_image_base64,author_name=author_name,blog_name=blog_name)
+        return render_template('post_details.html',post=post,cover_image_base64=cover_image_base64,author_name=author_name,blog_name=blog_name,existing_comments=existing_comments)
     except Exception as e:
         # logging.error("Error fetching post details:%s",e)
         return jsonify({"error":"Internal Server Error"}),500
@@ -409,6 +410,7 @@ def create_comment():
 def get_comments_by_post_id(post_id):
     try:
         comments = Comment().get_comments_by_post_id_with_author(post_id)
+         
         if comments is None:
             return jsonify({"error": "No comments found for this post"}), 404
         comments_list = [{'author_name': comment.author.name, 'comment': comment.comment} for comment in comments]

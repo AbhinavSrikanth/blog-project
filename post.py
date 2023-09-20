@@ -81,6 +81,44 @@ class Post:
                 print(f"Error fetching post by id: {e}")
             finally:
                 db.close_connection()
+        
+    def get_author_name_by_post_id(self,id):
+        db=Database()
+        if db.connection:
+            try:
+                with db.connection.cursor() as cursor:
+                    select_query= "SELECT author.name AS author_name FROM post INNER JOIN author ON post.email = author.email WHERE post.id = %s"
+                    cursor.execute(select_query, (id,))
+                    author_name=cursor.fetchone()
+                    if author_name:
+                        author_name=author_name[0]
+                        print(author_name)
+                        
+                    return author_name
+
+            except Exception as e:
+                print(f"Error fetching author name by id: {e}")
+            finally:
+                db.close_connection()
+        
+    def get_blog_name_by_post_id(self,id):
+        db=Database()
+        if db.connection:
+            try:
+                with db.connection.cursor() as cursor:
+                    select_query= "SELECT blog.name AS blog_name FROM post INNER JOIN blog ON post.blog_id = blog.id WHERE post.id = %s"
+                    cursor.execute(select_query, (id,))
+                    blog_name=cursor.fetchone()
+                    if blog_name:
+                        blog_name=blog_name[0]
+                        print(blog_name)
+                        
+                    return blog_name
+
+            except Exception as e:
+                print(f"Error fetching author name by id: {e}")
+            finally:
+                db.close_connection()
 
 
     def update_data(self,**kwargs):
@@ -185,4 +223,3 @@ class Post:
             return None
         finally:
             db.close_connection()
-        

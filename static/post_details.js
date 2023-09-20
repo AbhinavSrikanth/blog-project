@@ -13,26 +13,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     const commentItem = document.createElement('li');
     commentItem.innerHTML = `<strong>${authorName}</strong> ${commentText}`;
     commentsList.appendChild(commentItem);
+    console.log('jkcbskjsb')
+  
   }
 
-  async function fetchAndDisplayComments() {
-    try {
-      const response = await fetch(`http://127.0.0.1:5000/comments/${postId}`);
-
-      if (response.ok) {
-        const existingComments = await response.json();
-        console.log('Received comments:',existingComments);
-        commentsList.innerHTML = '';
-        existingComments.forEach((comment) => {
-          appendCommentItem(comment.author_name, comment.comment);
+  function fetchNewComments() {
+    fetch(`/comments/${postId}`)
+        .then(response => response.json())
+        .then(data => {
+           const commentsContainer = document.getElementById('comments-container');
+            data.forEach(comment => {
+                const commentElement = document.createElement('div');
+                commentElement.textContent = `${author_name}: ${comment}`;
+                commentsContainer.appendChild(commentElement);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching new comments:', error);
         });
-      }
-    } catch (error) {
-      console.log('An error occurred while fetching existing comments', error);
-    }
-  }
-
-  fetchAndDisplayComments();
+}
 
   commentForm.addEventListener('submit', async (event) => {
     event.preventDefault();

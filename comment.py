@@ -158,7 +158,6 @@ class Comment:
                 with db.connection.cursor() as cursor:
                     print('Entered comment fetching function')
                     select_query = "SELECT comment.comment, author.name FROM comment INNER JOIN author ON comment.author_id = author.id WHERE comment.post_id = %s"
-                    print(select_query)
                     cursor.execute(select_query, (post_id,))
                     comment_data = cursor.fetchall()
                     if not comment_data:

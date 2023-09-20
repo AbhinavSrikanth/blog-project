@@ -5,15 +5,17 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Post Details</title>
+    <link rel="stylesheet" href="../../static/css/post_details.css">
 </head>
 <body>
 <div class="post-details">
-    <h1>{{ post.title }}</h1>
+    <h1>{{ post.title }}</h1><br>
     <img id="post-image" src="data:image/jpeg;base64,{{ post.cover_image_base64 }}" alt="Post_Image">
-    <p>{{ post.content }}</p>
-    <p>Author: {{ author_name }}</p>
-    <p>Blog Name: {{ blog_name }}</p>
-    <h2>Comments</h2>
+    <p>{{ post.content }}</p><br>
+    <div class="author-blog">
+    <p><strong>Author: </strong>{{ author_name }}</p><br>
+    <p><strong>Blog Name:</strong> {{ blog_name }}</p>
+    </div><br>
 <h2>Add a Comment:</h2>
 <form id="comment-form" class="comment" name="comment-form" method="POST" action="/comments">
     <div class="form-group">
@@ -22,15 +24,14 @@
     <input type="hidden" id="post_id" name="post_id" value="{{ postId }}">
     <button type="submit" class="btn btn-primary">Submit</button>
 </form>
-
+<h2>Comments:</h2>
 <ul id="comments-list">
 <div>
  <pre>{{ comments_with_author }}</pre>
     {% for comment,author_name in existing_comments %}
     <li>
-        {{ author_name }}: {{ comment }}
+        <strong>{{ author_name }}</strong>: {{ comment }}<br>
     </li>
-    <li>Loop Iteration</li>
     {% endfor %}
 </div>
 </ul>

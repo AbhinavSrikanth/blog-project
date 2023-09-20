@@ -55,6 +55,14 @@ button {
   width: 100%;
   align-items: center;
 }
+.author-blog {
+  display: flex;
+  justify-content: space-between;
+}
+
+.author-blog p {
+  margin: 0;
+}
 
 button:hover {
   color: #000;
